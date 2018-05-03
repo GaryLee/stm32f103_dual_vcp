@@ -48,5 +48,6 @@ MCU: STM32F103C6Tx(72MHz, LQFP48, 32KB Flash, 10KB RAM)
     - USART3_RTS: PB14(optional)
 
 **NOTE**: Check stm32f103_dual_vcp.ioc for detial.
+
 **NOTE**: If you encountered the multiple re-definition issues when compiling the source code, 
     check the Makefile and remove any duplicate files in C_SOURCES instruction.
