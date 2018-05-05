@@ -86,7 +86,9 @@ Src/stm32f1xx_it.c \
 Src/usb_device.c \
 Src/usbd_cdc_if.c \
 Src/usbd_conf.c \
-Src/usbd_desc.c
+Src/usbd_desc.c \
+Src/SEGGER_RTT.c \
+Src/SEGGER_RTT_printf.c
 
 # ASM sources
 ASM_SOURCES =  \

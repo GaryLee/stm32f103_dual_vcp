@@ -1105,17 +1105,10 @@ uint8_t  USBD_CDC_TransmitPacket(USBD_HandleTypeDef *pdev)
       hcdc->TxState = 1;
 
       /* Transmit next packet */      
-      if (data_in_ep == CDC_IN_EP+2) {
-        USBD_LL_Transmit(pdev,
-                        data_in_ep,
-                        hcdc->TxBuffer,
-                        hcdc->TxLength);
-      } else {
-        USBD_LL_Transmit(pdev,
-                        CDC_IN_EP,
-                        hcdc->TxBuffer,
-                        hcdc->TxLength);
-      }
+      USBD_LL_Transmit(pdev,
+                      data_in_ep,
+                      hcdc->TxBuffer,
+                      hcdc->TxLength);
       return USBD_OK;
     }
     else
@@ -1146,32 +1139,18 @@ uint8_t  USBD_CDC_ReceivePacket(USBD_HandleTypeDef *pdev)
     if(pdev->dev_speed == USBD_SPEED_HIGH  ) 
     {      
       /* Prepare Out endpoint to receive next packet */
-      if (data_out_ep == CDC_OUT_EP) {
-        USBD_LL_PrepareReceive(pdev,
-                              CDC_OUT_EP,
-                              hcdc->RxBuffer,
-                              CDC_DATA_HS_OUT_PACKET_SIZE);
-      } else if (data_out_ep == CDC_OUT_EP+2) {
-        USBD_LL_PrepareReceive(pdev,
-                              CDC_OUT_EP + 2,
-                              hcdc->RxBuffer,
-                              CDC_DATA_HS_OUT_PACKET_SIZE);
-      }
+      USBD_LL_PrepareReceive(pdev,
+                            data_out_ep,
+                            hcdc->RxBuffer,
+                            CDC_DATA_HS_OUT_PACKET_SIZE);
     }
     else
     {
       /* Prepare Out endpoint to receive next packet */
-      if (data_out_ep == CDC_OUT_EP) {
-        USBD_LL_PrepareReceive(pdev,
-                              CDC_OUT_EP,
-                              hcdc->RxBuffer,
-                              CDC_DATA_FS_OUT_PACKET_SIZE);
-      } else {
-        USBD_LL_PrepareReceive(pdev,
-                              CDC_OUT_EP+2,
-                              hcdc->RxBuffer,
-                              CDC_DATA_FS_OUT_PACKET_SIZE);
-      }
+      USBD_LL_PrepareReceive(pdev,
+                            data_out_ep,
+                            hcdc->RxBuffer,
+                            CDC_DATA_FS_OUT_PACKET_SIZE);
     }
     return USBD_OK;
   }

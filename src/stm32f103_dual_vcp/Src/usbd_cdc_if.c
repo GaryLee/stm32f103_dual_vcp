@@ -51,8 +51,10 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "SEGGER_RTT.h"
 extern uint8_t data_out_ep;
 extern uint8_t data_in_ep;
+extern uint32_t hal_pcd_epnum; // in stm32f1xx_it.c.
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -261,7 +263,8 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
       *    bParityType -> line_coding->paritytype
       *    bDataBits   -> line_coding->datatype
       */
-
+      SEGGER_RTT_printf(0, "LINE_CODING: EP=0x%02X(0x%02X, 0x%02X), bitrate=%d, format=%d, parity=%d, datatype=%d\n",
+        hal_pcd_epnum, data_in_ep, data_out_ep, line_coding->bitrate, line_coding->format, line_coding->paritytype, line_coding->datatype);
     }
     break;
 
@@ -305,7 +308,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   
-  data_in_ep = (data_out_ep == CDC_OUT_EP+2) ? CDC_IN_EP+2 : CDC_IN_EP;
+  data_in_ep = (data_out_ep == CDC_OUT_EP + 2) ? CDC_IN_EP + 2 : CDC_IN_EP;
   CDC_Transmit_FS(Buf, *Len);
   data_in_ep = 0;
   return (USBD_OK);
