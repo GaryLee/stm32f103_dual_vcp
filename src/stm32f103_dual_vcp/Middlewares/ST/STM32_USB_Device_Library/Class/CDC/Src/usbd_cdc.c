@@ -379,7 +379,7 @@ __ALIGN_BEGIN uint8_t USBD_CDC_CfgFSDesc[USB_CDC_CONFIG_DESC_SIZ] __ALIGN_END =
   USB_DESC_TYPE_CONFIGURATION,      /* bDescriptorType: Configuration */
   USB_CDC_CONFIG_DESC_SIZ,                /* wTotalLength:no of returned bytes */
   0x00,
-  0x02*2,   /* bNumInterfaces: 2 interface */
+  0x02*2,   /* bNumInterfaces: 4 interface */
   0x01,   /* bConfigurationValue: Configuration value */
   0x00,   /* iConfiguration: Index of string descriptor describing the configuration */
   0xC0,   /* bmAttributes: self powered */
@@ -511,7 +511,7 @@ __ALIGN_BEGIN uint8_t USBD_CDC_CfgFSDesc[USB_CDC_CONFIG_DESC_SIZ] __ALIGN_END =
   0x24,   /* bDescriptorType: CS_INTERFACE */
   0x01,   /* bDescriptorSubtype: Call Management Func Desc */
   0x00,   /* bmCapabilities: D0+D1 */
-  0x01+2,   /* bDataInterface: 1+2 */
+  0x01 + 2 ,   /* bDataInterface: 1+2 */
   
   /*ACM Functional Descriptor*/
   0x04,   /* bFunctionLength */
