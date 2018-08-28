@@ -36,8 +36,7 @@
 #include "stm32f1xx_it.h"
 
 /* USER CODE BEGIN 0 */
-#include "SEGGER_RTT.h"
-volatile uint32_t hal_pcd_epnum; // in stm32f1xx_it.c.
+
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -199,14 +198,11 @@ void SysTick_Handler(void)
 void USB_LP_CAN1_RX0_IRQHandler(void)
 {
   /* USER CODE BEGIN USB_LP_CAN1_RX0_IRQn 0 */
-  // hal_pcd_epnum = PCD_GET_ENDPOINT(hpcd_USB_FS.Instance, (hpcd_USB_FS.Instance->ISTR & USB_ISTR_CTR));
-  hal_pcd_epnum = (uint32_t)(hpcd_USB_FS.Instance->ISTR & 0xFF /* USB_ISTR_EP_ID */);
+
   /* USER CODE END USB_LP_CAN1_RX0_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_FS);
   /* USER CODE BEGIN USB_LP_CAN1_RX0_IRQn 1 */
-  // if (hal_pcd_epnum) {
-  //   SEGGER_RTT_printf(0, "EP=%d\n", hal_pcd_epnum);
-  // }
+
   /* USER CODE END USB_LP_CAN1_RX0_IRQn 1 */
 }
 

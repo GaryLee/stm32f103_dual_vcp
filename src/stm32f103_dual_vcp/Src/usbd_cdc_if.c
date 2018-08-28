@@ -51,12 +51,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-#include "SEGGER_RTT.h"
-extern uint8_t data_out_ep;
-extern uint8_t data_in_ep;
-extern volatile uint32_t hal_pcd_epnum; // in stm32f1xx_it.c.
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
+
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,7 +78,7 @@ extern UART_HandleTypeDef huart3;
   */
 
 /* USER CODE BEGIN PRIVATE_TYPES */
-static int line_coding_cfg_index = 0;
+
 /* USER CODE END PRIVATE_TYPES */
 
 /**
@@ -256,60 +251,11 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
-    {
-      UART_HandleTypeDef *huart;
-      USBD_CDC_LineCodingTypeDef *line_coding = (USBD_CDC_LineCodingTypeDef *)pbuf;
-      /*
-      * The maping between USBD_CDC_LineCodingTypeDef and line coding structure.
-      *    dwDTERate   -> line_coding->bitrate
-      *    bCharFormat -> line_coding->format
-      *    bParityType -> line_coding->paritytype
-      *    bDataBits   -> line_coding->datatype
-      */      
-      if (line_coding->bitrate != 0) {
-        if (line_coding_cfg_index == 0) {
-          huart = &huart2;
-        } else if (line_coding_cfg_index == 2) {
-          huart = &huart3;
-        } else {
-          huart = NULL;
-        }
-        if (huart != NULL) {
-          huart->Init.BaudRate = line_coding->bitrate;
-          huart->Init.WordLength = (line_coding->datatype == 8) ? UART_WORDLENGTH_8B : UART_WORDLENGTH_9B;
-          huart->Init.StopBits = (line_coding->format == 0) ? UART_STOPBITS_1 : UART_STOPBITS_2;
-          huart->Init.Parity = (line_coding->paritytype == 0) ? UART_PARITY_NONE : (line_coding->paritytype == 1) ? UART_PARITY_ODD : UART_PARITY_EVEN;
-          huart->Init.Mode = UART_MODE_TX_RX;
-          huart->Init.HwFlowCtl = UART_HWCONTROL_NONE;
-          huart->Init.OverSampling = UART_OVERSAMPLING_16;
-          if (HAL_UART_Init(huart) != HAL_OK)
-          {
-            _Error_Handler(__FILE__, __LINE__);
-          }
-          SEGGER_RTT_printf(0, "LINE_CODING: EP=0x%04X, UART=%s, bitrate=%d, format=%d, parity=%d, datatype=%d\n",
-            hal_pcd_epnum, (huart == &huart2) ? "UART2" : "UART3",
-            line_coding->bitrate, line_coding->format, line_coding->paritytype, line_coding->datatype);
-        }
 
-        /* 
-        * It looks like we can't figure out which UART instance we are going to configure.
-        * Fortunately, Windows always configure two uart port at same time. So, we use an
-        * index counter to figure out the UART instance.
-        */
-        line_coding_cfg_index = (line_coding_cfg_index + 1) % 4;
-      }
-    }
     break;
 
     case CDC_GET_LINE_CODING:
-    {
-      USBD_CDC_LineCodingTypeDef *line_coding = (USBD_CDC_LineCodingTypeDef *)pbuf;
-      UART_HandleTypeDef *huart = (line_coding_cfg_index == 0) ? &huart2 : &huart3;
-      line_coding->bitrate = huart->Init.BaudRate;
-      line_coding->datatype = (huart->Init.WordLength == UART_WORDLENGTH_8B) ? 8 : 9;
-      line_coding->format = (huart->Init.StopBits == UART_STOPBITS_1) ? 0 : 2;
-      line_coding->paritytype = (huart->Init.Parity == UART_PARITY_NONE) ? 0 : (huart->Init.Parity == UART_PARITY_ODD) ? 1 : 2;
-    }
+
     break;
 
     case CDC_SET_CONTROL_LINE_STATE:
@@ -347,10 +293,6 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-  
-  data_in_ep = (data_out_ep == CDC_OUT_EP + 2) ? CDC_IN_EP + 2 : CDC_IN_EP;
-  CDC_Transmit_FS(Buf, *Len);
-  data_in_ep = 0;
   return (USBD_OK);
   /* USER CODE END 6 */
 }

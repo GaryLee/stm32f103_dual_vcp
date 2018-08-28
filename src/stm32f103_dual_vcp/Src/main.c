@@ -111,10 +111,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USB_DEVICE_Init();
   MX_RTC_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -197,6 +197,14 @@ void SystemClock_Config(void)
 static void MX_RTC_Init(void)
 {
 
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
     /**Initialize RTC Only 
     */
   hrtc.Instance = RTC;
@@ -206,6 +214,9 @@ static void MX_RTC_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
 
 }
 
