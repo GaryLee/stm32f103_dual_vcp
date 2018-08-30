@@ -1,4 +1,10 @@
 .DS_Store
-src/stm32f103_dual_vcp/MDK-ARM/*
+src/stm32f103_dual_vcp/MDK-ARM/DebugConfig/*
+src/stm32f103_dual_vcp/MDK-ARM/stm32f103_dual_vcp/*
 src/stm32f103_dual_vcp/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/*
 src/stm32f103_dual_vcp/Drivers/CMSIS/DSP_Lib/Source/*
+/src/stm32f103_dual_vcp/MDK-ARM/JLinkLog.txt
+/src/stm32f103_dual_vcp/MDK-ARM/JLinkSettings.ini
+/src/stm32f103_dual_vcp/MDK-ARM/startup_stm32f103xb.lst
+/src/stm32f103_dual_vcp/MDK-ARM/stm32f103_dual_vcp.uvguix.garylee
+/.vscode
