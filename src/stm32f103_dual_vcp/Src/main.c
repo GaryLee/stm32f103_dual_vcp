@@ -117,6 +117,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
+  __HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
   HAL_UART_Receive_IT(&huart2, uart2_buf, 1);
   HAL_UART_Receive_IT(&huart3, uart3_buf, 1);
   /* USER CODE END 2 */
