@@ -51,7 +51,10 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "stm32f1xx_hal_uart.h"
 #include "SEGGER_RTT.h"
+extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -251,7 +254,30 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
-      SEGGER_RTT_printf(0, "LINE: %d; rate=%d\n", index, *((uint32_t *)pbuf));
+    {
+      UART_HandleTypeDef *huart = (index < 2) ? &huart2 : &huart3;
+      USBD_CDC_LineCodingTypeDef *line_coding = (USBD_CDC_LineCodingTypeDef *)pbuf;
+      /*
+      * The maping between USBD_CDC_LineCodingTypeDef and line coding structure.
+      *    dwDTERate   -> line_coding->bitrate
+      *    bCharFormat -> line_coding->format
+      *    bParityType -> line_coding->paritytype
+      *    bDataBits   -> line_coding->datatype
+      */      
+      huart->Init.BaudRate = line_coding->bitrate;
+      huart->Init.WordLength = (line_coding->datatype == 8) ? UART_WORDLENGTH_8B : UART_WORDLENGTH_9B;
+      huart->Init.StopBits = (line_coding->format == 0) ? UART_STOPBITS_1 : UART_STOPBITS_2;
+      huart->Init.Parity = (line_coding->paritytype == 0) ? UART_PARITY_NONE : (line_coding->paritytype == 1) ? UART_PARITY_ODD : UART_PARITY_EVEN;
+      huart->Init.Mode = UART_MODE_TX_RX;
+      huart->Init.HwFlowCtl = UART_HWCONTROL_NONE;
+      huart->Init.OverSampling = UART_OVERSAMPLING_16;
+      if (HAL_UART_Init(huart) != HAL_OK) {
+        _Error_Handler(__FILE__, __LINE__);
+      }
+      SEGGER_RTT_printf(0, "LINE_CODING: UART=%s, bitrate=%d, format=%d, parity=%d, datatype=%d\n",
+        (huart == &huart2) ? "UART2" : "UART3",
+        line_coding->bitrate, line_coding->format, line_coding->paritytype, line_coding->datatype);
+    }
     break;
 
     case CDC_GET_LINE_CODING:
@@ -291,10 +317,13 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, uint16_t index)
 {
   /* USER CODE BEGIN 6 */
-  SEGGER_RTT_printf(0, "Recv: %d\n", index);
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS, index);
+#if defined(LOOPBACK_TEST)
   CDC_Transmit_FS(Buf, *Len, index);
+#else
+  HAL_UART_Transmit((index < 2) ? &huart2 : &huart3, Buf, *Len, 500);
+#endif
   return (USBD_OK);
   /* USER CODE END 6 */
 }

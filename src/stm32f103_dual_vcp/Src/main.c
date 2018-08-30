@@ -52,7 +52,7 @@
 #include "usb_device.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -79,7 +79,9 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
+#define UART_BUF_LEN (64)
+  uint8_t uart2_buf[1];
+  uint8_t uart3_buf[1];
 /* USER CODE END 0 */
 
 /**
@@ -90,7 +92,6 @@ static void MX_USART3_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -116,14 +117,15 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_IT(&huart2, uart2_buf, 1);
+  HAL_UART_Receive_IT(&huart3, uart3_buf, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+    
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -277,6 +279,28 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart == &huart2) {
+    CDC_Transmit_FS(uart2_buf, 1, 0);
+    HAL_UART_Receive_IT(&huart2, uart2_buf, 1);  
+  } else if (huart == &huart3) {
+    CDC_Transmit_FS(uart3_buf, 1, 2);
+    HAL_UART_Receive_IT(&huart3, uart3_buf, 1);
+  }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+  if (huart == &huart2) {
+    HAL_UART_Abort_IT(huart);
+    HAL_UART_Receive_IT(&huart2, uart2_buf, 1);  
+  } else if (huart == &huart3) {
+    HAL_UART_Abort_IT(huart);
+    HAL_UART_Receive_IT(&huart3, uart3_buf, 1);  
+  }
+}
 
 /* USER CODE END 4 */
 
