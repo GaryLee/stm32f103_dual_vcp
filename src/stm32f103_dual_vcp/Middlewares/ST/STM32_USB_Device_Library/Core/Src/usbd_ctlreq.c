@@ -108,6 +108,7 @@ static uint8_t USBD_GetLen(uint8_t *buf);
   * @{
   */ 
 
+// extern int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...);
 
 /**
 * @brief  USBD_StdDevReq
@@ -119,7 +120,7 @@ static uint8_t USBD_GetLen(uint8_t *buf);
 USBD_StatusTypeDef  USBD_StdDevReq (USBD_HandleTypeDef *pdev , USBD_SetupReqTypedef  *req)
 {
   USBD_StatusTypeDef ret = USBD_OK;  
-  
+  // SEGGER_RTT_printf(0, "Dev: ep=%02X, req=%d\n", LOBYTE(req->wIndex), req->bRequest);
   switch (req->bRequest) 
   {
   case USB_REQ_GET_DESCRIPTOR: 
@@ -170,7 +171,7 @@ USBD_StatusTypeDef  USBD_StdDevReq (USBD_HandleTypeDef *pdev , USBD_SetupReqType
 USBD_StatusTypeDef  USBD_StdItfReq (USBD_HandleTypeDef *pdev , USBD_SetupReqTypedef  *req)
 {
   USBD_StatusTypeDef ret = USBD_OK; 
-  
+  // SEGGER_RTT_printf(0, "Itf: ep=%02X\n", LOBYTE(req->wIndex));
   switch (pdev->dev_state) 
   {
   case USBD_STATE_CONFIGURED:
@@ -210,7 +211,9 @@ USBD_StatusTypeDef  USBD_StdEPReq (USBD_HandleTypeDef *pdev , USBD_SetupReqTyped
   uint8_t   ep_addr;
   USBD_StatusTypeDef ret = USBD_OK; 
   USBD_EndpointTypeDef   *pep;
-  ep_addr  = LOBYTE(req->wIndex);   
+  ep_addr  = LOBYTE(req->wIndex);
+
+  // SEGGER_RTT_printf(0, "EP: ep=%02X\n", ep_addr);
   
   /* Check if it is a class request */
   if ((req->bmRequest & 0x60) == 0x20)
