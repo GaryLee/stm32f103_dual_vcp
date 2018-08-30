@@ -1,1 +1,4 @@
 .DS_Store
+src/stm32f103_dual_vcp/MDK-ARM/*
+src/stm32f103_dual_vcp/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/*
+src/stm32f103_dual_vcp/Drivers/CMSIS/DSP_Lib/Source/*
