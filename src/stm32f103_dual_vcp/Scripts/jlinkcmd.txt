@@ -1,0 +1,6 @@
+loadbin ..\build\stm32f103_dual_vcp.hex,0
+r
+sleep 300
+g
+sleep 100
+exit
