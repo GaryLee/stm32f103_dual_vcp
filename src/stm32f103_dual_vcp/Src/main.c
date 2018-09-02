@@ -53,6 +53,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
+#include "SEGGER_RTT.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -80,8 +81,8 @@ static void MX_USART3_UART_Init(void);
 
 /* USER CODE BEGIN 0 */
 #define UART_BUF_LEN (64)
-  uint8_t uart2_buf[1];
-  uint8_t uart3_buf[1];
+uint8_t uart2_buf[1];
+uint8_t uart3_buf[1];
 /* USER CODE END 0 */
 
 /**
@@ -117,10 +118,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
-  __HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
-  HAL_UART_Receive_IT(&huart2, uart2_buf, 1);
-  HAL_UART_Receive_IT(&huart3, uart3_buf, 1);
+  __HAL_UART_DISABLE(&huart2);
+  __HAL_UART_DISABLE(&huart3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -234,7 +233,7 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
   huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
@@ -253,7 +252,7 @@ static void MX_USART3_UART_Init(void)
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
   huart3.Init.Mode = UART_MODE_TX_RX;
-  huart3.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart3.Init.OverSampling = UART_OVERSAMPLING_16;
   if (HAL_UART_Init(&huart3) != HAL_OK)
   {
@@ -286,10 +285,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart == &huart2) {
     CDC_Transmit_FS(uart2_buf, 1, 0);
+    SEGGER_RTT_printf(0, "Uart2 RxCplt %c\n", uart2_buf[0]);
     HAL_UART_Receive_IT(&huart2, uart2_buf, 1);  
   } else if (huart == &huart3) {
     CDC_Transmit_FS(uart3_buf, 1, 2);
+    SEGGER_RTT_printf(0, "Uart3 RxCplt %c\n", uart3_buf[0]);
     HAL_UART_Receive_IT(&huart3, uart3_buf, 1);
+  } else {
+    SEGGER_RTT_printf(0, "ERROR: Unknown handler in HAL_UART_RxCpltCallback\n");
   }
 }
 
@@ -297,10 +300,10 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
   if (huart == &huart2) {
     HAL_UART_Abort_IT(huart);
-    HAL_UART_Receive_IT(&huart2, uart2_buf, 1);  
+    HAL_UART_Receive_IT(huart, uart2_buf, 1);  
   } else if (huart == &huart3) {
     HAL_UART_Abort_IT(huart);
-    HAL_UART_Receive_IT(&huart3, uart3_buf, 1);  
+    HAL_UART_Receive_IT(huart, uart3_buf, 1);  
   }
 }
 

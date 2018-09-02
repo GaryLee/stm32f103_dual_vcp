@@ -55,6 +55,8 @@
 #include "SEGGER_RTT.h"
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
+extern uint8_t uart2_buf[1];
+extern uint8_t uart3_buf[1];
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -271,9 +273,25 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
       huart->Init.Mode = UART_MODE_TX_RX;
       huart->Init.HwFlowCtl = UART_HWCONTROL_NONE;
       huart->Init.OverSampling = UART_OVERSAMPLING_16;
+        
+      __HAL_UART_DISABLE(huart);
       if (HAL_UART_Init(huart) != HAL_OK) {
         _Error_Handler(__FILE__, __LINE__);
       }
+      __HAL_UART_ENABLE_IT(huart, UART_IT_RXNE);
+      __HAL_UART_ENABLE_IT(huart, UART_IT_TXE);
+      if (index < 2) {
+        NVIC_EnableIRQ(USART2_IRQn);
+        __HAL_UART_ENABLE(huart);
+        NVIC_ClearPendingIRQ(USART2_IRQn);
+        HAL_UART_Receive_IT(huart, uart2_buf, 1);
+      } else {
+        NVIC_EnableIRQ(USART3_IRQn);
+        __HAL_UART_ENABLE(huart);
+        NVIC_ClearPendingIRQ(USART3_IRQn);
+        HAL_UART_Receive_IT(huart, uart3_buf, 1);
+      }
+      
       SEGGER_RTT_printf(0, "LINE_CODING: UART=%s, bitrate=%d, format=%d, parity=%d, datatype=%d\n",
         (huart == &huart2) ? "UART2" : "UART3",
         line_coding->bitrate, line_coding->format, line_coding->paritytype, line_coding->datatype);
@@ -322,7 +340,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, uint16_t index)
 #if defined(LOOPBACK_TEST)
   CDC_Transmit_FS(Buf, *Len, index);
 #else
-  HAL_UART_Transmit((index < 2) ? &huart2 : &huart3, Buf, *Len, 500);
+  SEGGER_RTT_printf(0, "[%s] Tx: %c\n", (index < 2) ? "uart2" : "uart3", Buf[0]);
+  HAL_UART_Transmit_IT((index < 2) ? &huart2 : &huart3, Buf, *Len);
 #endif
   return (USBD_OK);
   /* USER CODE END 6 */
