@@ -259,6 +259,9 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
     {
       UART_HandleTypeDef *huart = (index < 2) ? &huart2 : &huart3;
       USBD_CDC_LineCodingTypeDef *line_coding = (USBD_CDC_LineCodingTypeDef *)pbuf;
+      if (line_coding->bitrate == 0 || line_coding->datatype == 0) {
+          break;
+      }
       /*
       * The maping between USBD_CDC_LineCodingTypeDef and line coding structure.
       *    dwDTERate   -> line_coding->bitrate
