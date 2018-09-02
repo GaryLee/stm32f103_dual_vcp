@@ -54,7 +54,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 /* USER CODE BEGIN Includes */
-
+#include "stdint.h"
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
@@ -67,7 +67,17 @@
 /* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
-
+#define UART_BUF_LEN (48)
+extern uint8_t uart2_buf[UART_BUF_LEN];
+extern uint8_t uart2_buf_out[UART_BUF_LEN];
+extern uint8_t uart2_byte[1];
+extern int uart2_buf_len;
+extern int uart2_buf_out_len;
+extern uint8_t uart3_buf[UART_BUF_LEN];
+extern uint8_t uart3_buf_out[UART_BUF_LEN];
+extern uint8_t uart3_byte[1];
+extern int uart3_buf_len;
+extern int uart3_buf_out_len;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

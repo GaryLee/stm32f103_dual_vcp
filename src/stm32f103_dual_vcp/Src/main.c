@@ -80,7 +80,6 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-#define UART_BUF_LEN (48)
 uint8_t uart2_buf[UART_BUF_LEN];
 uint8_t uart2_buf_out[UART_BUF_LEN];
 uint8_t uart2_byte[1];

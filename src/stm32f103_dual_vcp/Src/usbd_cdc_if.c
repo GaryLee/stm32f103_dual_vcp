@@ -53,12 +53,9 @@
 /* USER CODE BEGIN INCLUDE */
 #include "stm32f1xx_hal_uart.h"
 #include "SEGGER_RTT.h"
+#include "main.h"
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
-extern int uart2_buf_len;
-extern int uart3_buf_len;
-extern uint8_t uart2_byte[1];
-extern uint8_t uart3_byte[1];
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
