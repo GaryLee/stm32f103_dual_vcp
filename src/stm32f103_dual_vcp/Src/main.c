@@ -285,14 +285,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart == &huart2) {
     CDC_Transmit_FS(uart2_buf, 1, 0);
-    SEGGER_RTT_printf(0, "Uart2 RxCplt %c\n", uart2_buf[0]);
     HAL_UART_Receive_IT(&huart2, uart2_buf, 1);  
   } else if (huart == &huart3) {
     CDC_Transmit_FS(uart3_buf, 1, 2);
-    SEGGER_RTT_printf(0, "Uart3 RxCplt %c\n", uart3_buf[0]);
     HAL_UART_Receive_IT(&huart3, uart3_buf, 1);
-  } else {
-    SEGGER_RTT_printf(0, "ERROR: Unknown handler in HAL_UART_RxCpltCallback\n");
   }
 }
 
