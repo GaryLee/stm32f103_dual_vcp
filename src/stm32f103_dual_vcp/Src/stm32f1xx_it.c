@@ -36,7 +36,20 @@
 #include "stm32f1xx_it.h"
 
 /* USER CODE BEGIN 0 */
+#include <string.h>
+#include "stm32f1xx_hal_usart.h"
 #include "SEGGER_RTT.h"
+#define UART_BUF_LEN (32)
+extern uint8_t uart2_buf[UART_BUF_LEN];
+extern uint8_t uart2_buf_out[UART_BUF_LEN];
+extern uint8_t uart2_byte[1];
+extern int uart2_buf_len;
+extern int uart2_buf_out_len;
+extern uint8_t uart3_buf[UART_BUF_LEN];
+extern uint8_t uart3_buf_out[UART_BUF_LEN];
+extern uint8_t uart3_byte[1];
+extern int uart3_buf_len;
+extern int uart3_buf_out_len;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -218,7 +231,19 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-
+  if(__HAL_USART_GET_FLAG(&huart2, USART_FLAG_IDLE)) {
+      if (uart2_buf_len > 0) {
+        if (uart2_buf_out_len == 0) {
+            memcpy(uart2_buf_out, uart2_buf, uart2_buf_len);
+            uart2_buf_out_len = uart2_buf_len;
+        } else {
+            memcpy(&uart2_buf_out[uart2_buf_out_len], uart2_buf, uart2_buf_len);
+            uart2_buf_out_len += uart2_buf_len;
+        }
+        uart2_buf_len = 0;
+      }
+      __HAL_USART_CLEAR_IDLEFLAG(&huart2);
+  }
   /* USER CODE END USART2_IRQn 1 */
 }
 
@@ -229,10 +254,23 @@ void USART3_IRQHandler(void)
 {
   /* USER CODE BEGIN USART3_IRQn 0 */
   // SEGGER_RTT_printf(0, "Uart3 IRQ\n");
+
   /* USER CODE END USART3_IRQn 0 */
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
-
+  if(__HAL_USART_GET_FLAG(&huart3, USART_FLAG_IDLE)) {
+     if (uart3_buf_len > 0) {
+        if (uart3_buf_out_len == 0) {
+            memcpy(uart3_buf_out, uart3_buf, uart3_buf_len);
+            uart3_buf_out_len = uart3_buf_len;
+        } else {
+            memcpy(&uart3_buf_out[uart3_buf_out_len], uart3_buf, uart3_buf_len);
+            uart3_buf_out_len += uart3_buf_len;
+        }
+        uart3_buf_len = 0;
+    }
+     __HAL_USART_CLEAR_IDLEFLAG(&huart3);
+  }
   /* USER CODE END USART3_IRQn 1 */
 }
 

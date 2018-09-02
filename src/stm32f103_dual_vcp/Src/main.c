@@ -80,9 +80,18 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-#define UART_BUF_LEN (64)
-uint8_t uart2_buf[1];
-uint8_t uart3_buf[1];
+// #define UART_BUF_LEN (64)
+#define UART_BUF_LEN (32)
+uint8_t uart2_buf[UART_BUF_LEN];
+uint8_t uart2_buf_out[UART_BUF_LEN];
+uint8_t uart2_byte[1];
+int uart2_buf_len = 0;
+int uart2_buf_out_len = 0;
+uint8_t uart3_buf[UART_BUF_LEN];
+uint8_t uart3_buf_out[UART_BUF_LEN];
+uint8_t uart3_byte[1];
+int uart3_buf_len = 0;
+int uart3_buf_out_len = 0;
 /* USER CODE END 0 */
 
 /**
@@ -126,7 +135,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    
+    if (uart2_buf_out_len > 0) {
+        // SEGGER_RTT_printf(0, "uart2:CDC len=%d\n", uart2_buf_out_len);
+        while (CDC_Transmit_FS(uart2_buf_out, (uint16_t)uart2_buf_out_len, 0) == USBD_BUSY) {
+            /* Until data out. */
+        }
+        uart2_buf_out_len = 0;
+    } 
+    if (uart3_buf_out_len > 0) {
+        // SEGGER_RTT_printf(0, "uart3:CDC len=%d\n", uart3_buf_out_len);
+        while (CDC_Transmit_FS(uart3_buf_out, (uint16_t)uart3_buf_out_len, 2) == USBD_BUSY) {
+            /* Until data out. */
+        }
+        uart3_buf_out_len = 0;
+    }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -284,11 +306,23 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart == &huart2) {
-    CDC_Transmit_FS(uart2_buf, 1, 0);
-    HAL_UART_Receive_IT(&huart2, uart2_buf, 1);  
+    uart2_buf[uart2_buf_len++] = uart2_byte[0];
+    // SEGGER_RTT_printf(0, "[uart2]Rx(%d) %c\n", uart2_buf_len, uart2_byte[0]);
+    if (uart2_buf_len == UART_BUF_LEN) {
+        memcpy(uart2_buf_out, uart2_buf, uart2_buf_len);
+        uart2_buf_out_len = uart2_buf_len;
+        uart2_buf_len = 0;
+    }
+    HAL_UART_Receive_IT(&huart2, uart2_byte, 1);  
   } else if (huart == &huart3) {
-    CDC_Transmit_FS(uart3_buf, 1, 2);
-    HAL_UART_Receive_IT(&huart3, uart3_buf, 1);
+    uart3_buf[uart3_buf_len++] = uart3_byte[0];
+    // SEGGER_RTT_printf(0, "[uart3]Rx(%d) %c\n", uart3_buf_len, uart3_byte[0]);
+    if (uart3_buf_len == UART_BUF_LEN) {
+        memcpy(uart2_buf_out, uart2_buf, uart3_buf_len);
+        uart3_buf_out_len = uart3_buf_len;
+        uart3_buf_len = 0;
+    }
+    HAL_UART_Receive_IT(&huart3, uart3_byte, 1);
   }
 }
 
