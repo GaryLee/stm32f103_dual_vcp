@@ -39,7 +39,7 @@
 #include <string.h>
 #include "stm32f1xx_hal_usart.h"
 #include "SEGGER_RTT.h"
-#define UART_BUF_LEN (32)
+#define UART_BUF_LEN (48)
 extern uint8_t uart2_buf[UART_BUF_LEN];
 extern uint8_t uart2_buf_out[UART_BUF_LEN];
 extern uint8_t uart2_byte[1];
