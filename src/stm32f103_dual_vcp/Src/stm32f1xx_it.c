@@ -282,15 +282,15 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
   if(__HAL_USART_GET_FLAG(&huart2, USART_FLAG_IDLE)) {
-      if (uart2_buf_len > 0) {
-        if (uart2_buf_out_len == 0) {
-            memcpy(uart2_buf_out, uart2_buf, uart2_buf_len);
-            uart2_buf_out_len = uart2_buf_len;
+      if (ctx.uart2.buf_len > 0) {
+        if (ctx.uart2.buf_out_len == 0) {
+            memcpy(ctx.uart2.buf_out, ctx.uart2.buf, ctx.uart2.buf_len);
+            ctx.uart2.buf_out_len = ctx.uart2.buf_len;
         } else {
-            memcpy(&uart2_buf_out[uart2_buf_out_len], uart2_buf, uart2_buf_len);
-            uart2_buf_out_len += uart2_buf_len;
+            memcpy(&ctx.uart2.buf_out[ctx.uart2.buf_out_len], ctx.uart2.buf, ctx.uart2.buf_len);
+            ctx.uart2.buf_out_len += ctx.uart2.buf_len;
         }
-        uart2_buf_len = 0;
+        ctx.uart2.buf_len = 0;
       }
       __HAL_USART_CLEAR_IDLEFLAG(&huart2);
   }
@@ -309,15 +309,15 @@ void USART3_IRQHandler(void)
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
   if(__HAL_USART_GET_FLAG(&huart3, USART_FLAG_IDLE)) {
-     if (uart3_buf_len > 0) {
-        if (uart3_buf_out_len == 0) {
-            memcpy(uart3_buf_out, uart3_buf, uart3_buf_len);
-            uart3_buf_out_len = uart3_buf_len;
+     if (ctx.uart3.buf_len > 0) {
+        if (ctx.uart3.buf_out_len == 0) {
+            memcpy(ctx.uart3.buf_out, ctx.uart3.buf, ctx.uart3.buf_len);
+            ctx.uart3.buf_out_len = ctx.uart3.buf_len;
         } else {
-            memcpy(&uart3_buf_out[uart3_buf_out_len], uart3_buf, uart3_buf_len);
-            uart3_buf_out_len += uart3_buf_len;
+            memcpy(&ctx.uart3.buf_out[ctx.uart3.buf_out_len], ctx.uart3.buf, ctx.uart3.buf_len);
+            ctx.uart3.buf_out_len += ctx.uart3.buf_len;
         }
-        uart3_buf_len = 0;
+        ctx.uart3.buf_len = 0;
     }
      __HAL_USART_CLEAR_IDLEFLAG(&huart3);
   }

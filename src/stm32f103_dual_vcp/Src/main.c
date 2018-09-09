@@ -85,16 +85,8 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-uint8_t uart2_buf[UART_BUF_LEN];
-uint8_t uart2_buf_out[UART_BUF_LEN];
-uint8_t uart2_byte[1];
-int uart2_buf_len = 0;
-int uart2_buf_out_len = 0;
-uint8_t uart3_buf[UART_BUF_LEN];
-uint8_t uart3_buf_out[UART_BUF_LEN];
-uint8_t uart3_byte[1];
-int uart3_buf_len = 0;
-int uart3_buf_out_len = 0;
+ctx_t ctx;
+
 /* USER CODE END 0 */
 
 /**
@@ -105,6 +97,18 @@ int uart3_buf_out_len = 0;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  memset(&ctx, 0, sizeof(ctx_t));
+  ctx.uart2.name = "UART2";
+  ctx.uart2.huart = &huart2;
+  ctx.uart2.hdma_rx = &hdma_usart2_rx;
+  ctx.uart2.hdma_tx = &hdma_usart2_tx;
+  ctx.uart2.irq_num = USART2_IRQn;
+  ctx.uart3.name = "UART3";
+  ctx.uart3.huart = &huart3;
+  ctx.uart3.hdma_rx = &hdma_usart3_rx;
+  ctx.uart3.hdma_tx = &hdma_usart3_tx;
+  ctx.uart3.irq_num = USART3_IRQn;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -139,19 +143,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    if (uart2_buf_out_len > 0) {
-        // SEGGER_RTT_printf(0, "uart2:CDC len=%d\n", uart2_buf_out_len);
-        while (CDC_Transmit_FS(uart2_buf_out, (uint16_t)uart2_buf_out_len, 0) == USBD_BUSY) {
+    if (ctx.uart2.buf_out_len > 0) {
+        // SEGGER_RTT_printf(0, "uart2:CDC len=%d\n", ctx.uart2.buf_out_len);
+        while (CDC_Transmit_FS(ctx.uart2.buf_out, (uint16_t)ctx.uart2.buf_out_len, 0) == USBD_BUSY) {
             /* Until data out. */
         }
-        uart2_buf_out_len = 0;
+        ctx.uart2.buf_out_len = 0;
     } 
-    if (uart3_buf_out_len > 0) {
-        // SEGGER_RTT_printf(0, "uart3:CDC len=%d\n", uart3_buf_out_len);
-        while (CDC_Transmit_FS(uart3_buf_out, (uint16_t)uart3_buf_out_len, 2) == USBD_BUSY) {
+    if (ctx.uart3.buf_out_len > 0) {
+        // SEGGER_RTT_printf(0, "uart3:CDC len=%d\n", ctx.uart3.buf_out_len);
+        while (CDC_Transmit_FS(ctx.uart3.buf_out, (uint16_t)ctx.uart3.buf_out_len, 2) == USBD_BUSY) {
             /* Until data out. */
         }
-        uart3_buf_out_len = 0;
+        ctx.uart3.buf_out_len = 0;
     }
   /* USER CODE END WHILE */
 
@@ -334,23 +338,23 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart == &huart2) {
-    uart2_buf[uart2_buf_len++] = uart2_byte[0];
-    // SEGGER_RTT_printf(0, "[uart2]Rx(%d) %c\n", uart2_buf_len, uart2_byte[0]);
-    if (uart2_buf_len == UART_BUF_LEN) {
-        memcpy(uart2_buf_out, uart2_buf, uart2_buf_len);
-        uart2_buf_out_len = uart2_buf_len;
-        uart2_buf_len = 0;
+    ctx.uart2.buf[ctx.uart2.buf_len++] = ctx.uart2.data[0];
+    // SEGGER_RTT_printf(0, "[uart2]Rx(%d) %c\n", ctx.uart2.buf_len, ctx.uart2.data[0]);
+    if (ctx.uart2.buf_len == UART_BUF_LEN) {
+        memcpy(ctx.uart2.buf_out, ctx.uart2.buf, ctx.uart2.buf_len);
+        ctx.uart2.buf_out_len = ctx.uart2.buf_len;
+        ctx.uart2.buf_len = 0;
     }
-    HAL_UART_Receive_IT(&huart2, uart2_byte, 1);  
+    HAL_UART_Receive_IT(&huart2, ctx.uart2.data, 1);  
   } else if (huart == &huart3) {
-    uart3_buf[uart3_buf_len++] = uart3_byte[0];
-    // SEGGER_RTT_printf(0, "[uart3]Rx(%d) %c\n", uart3_buf_len, uart3_byte[0]);
-    if (uart3_buf_len == UART_BUF_LEN) {
-        memcpy(uart2_buf_out, uart2_buf, uart3_buf_len);
-        uart3_buf_out_len = uart3_buf_len;
-        uart3_buf_len = 0;
+    ctx.uart3.buf[ctx.uart3.buf_len++] = ctx.uart3.data[0];
+    // SEGGER_RTT_printf(0, "[uart3]Rx(%d) %c\n", ctx.uart3.buf_len, ctx.uart3.data[0]);
+    if (ctx.uart3.buf_len == UART_BUF_LEN) {
+        memcpy(ctx.uart2.buf_out, ctx.uart2.buf, ctx.uart3.buf_len);
+        ctx.uart3.buf_out_len = ctx.uart3.buf_len;
+        ctx.uart3.buf_len = 0;
     }
-    HAL_UART_Receive_IT(&huart3, uart3_byte, 1);
+    HAL_UART_Receive_IT(&huart3, ctx.uart3.data, 1);
   }
 }
 
@@ -358,10 +362,10 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
   if (huart == &huart2) {
     HAL_UART_Abort_IT(huart);
-    HAL_UART_Receive_IT(huart, uart2_buf, 1);  
+    HAL_UART_Receive_IT(huart, ctx.uart2.buf, 1);  
   } else if (huart == &huart3) {
     HAL_UART_Abort_IT(huart);
-    HAL_UART_Receive_IT(huart, uart3_buf, 1);  
+    HAL_UART_Receive_IT(huart, ctx.uart3.buf, 1);  
   }
 }
 

@@ -52,7 +52,7 @@
 #define __USB_DEVICE__H__
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -61,7 +61,6 @@
 #include "usbd_def.h"
 
 /* USER CODE BEGIN INCLUDE */
-
 /* USER CODE END INCLUDE */
 
 /** @addtogroup USBD_OTG_DRIVER

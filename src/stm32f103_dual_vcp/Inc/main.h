@@ -55,6 +55,9 @@
 
 /* USER CODE BEGIN Includes */
 #include "stdint.h"
+#include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_dma.h"
+#include "stm32f1xx_hal_uart.h"
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
@@ -66,18 +69,29 @@
   */
 /* #define USE_FULL_ASSERT    1U */
 
-/* USER CODE BEGIN Private defines */
 #define UART_BUF_LEN (48)
-extern uint8_t uart2_buf[UART_BUF_LEN];
-extern uint8_t uart2_buf_out[UART_BUF_LEN];
-extern uint8_t uart2_byte[1];
-extern int uart2_buf_len;
-extern int uart2_buf_out_len;
-extern uint8_t uart3_buf[UART_BUF_LEN];
-extern uint8_t uart3_buf_out[UART_BUF_LEN];
-extern uint8_t uart3_byte[1];
-extern int uart3_buf_len;
-extern int uart3_buf_out_len;
+
+/* USER CODE BEGIN Private defines */
+typedef struct _uart_ctx_t {
+  const char *name;
+  UART_HandleTypeDef *huart;
+  IRQn_Type irq_num;
+  DMA_HandleTypeDef *hdma_rx;
+  DMA_HandleTypeDef *hdma_tx;
+  uint8_t buf[UART_BUF_LEN];
+  uint8_t buf_out[UART_BUF_LEN];
+  uint8_t data[1];
+  int buf_len;
+  int buf_out_len;
+} uart_ctx_t;
+
+typedef struct _ctx_t {
+  uart_ctx_t uart2;
+  uart_ctx_t uart3;
+} ctx_t;
+
+extern ctx_t ctx;
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
