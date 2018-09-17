@@ -363,6 +363,10 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, uint16_t index)
   }
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
   result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, index);
+  if (result == USBD_OK && (Len % USB_FS_MAX_PACKET_SIZE) == 0) {
+    USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, 0); // Send Zero-length packet to meet the rule of USB.
+    result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, index);
+  }
   /* USER CODE END 7 */
   return result;
 }

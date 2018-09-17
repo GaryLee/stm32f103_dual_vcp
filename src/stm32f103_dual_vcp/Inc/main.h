@@ -69,7 +69,7 @@
   */
 /* #define USE_FULL_ASSERT    1U */
 
-#define UART_BUF_LEN (48)
+#define UART_BUF_LEN (64)
 
 /* USER CODE BEGIN Private defines */
 typedef struct _uart_ctx_t {
