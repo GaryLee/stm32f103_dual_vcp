@@ -69,20 +69,29 @@
   */
 /* #define USE_FULL_ASSERT    1U */
 
-#define UART_BUF_LEN (64)
-
 /* USER CODE BEGIN Private defines */
+
+// Version information.
+#define MAIN_VERSION  (1)
+#define MINOR_VERSION (0)
+#define PATCH_VERSION (0)
+
+#define DBL_BUF_LEN (64)
+#define DBL_BUF_TOTAL_LEN (2 * DBL_BUF_LEN)
+
+typedef struct _hart_dbl_buf_t {
+  uint8_t data[2][DBL_BUF_LEN];
+  int len[2];
+  int idx;
+} uart_dbl_buf_t;
+
 typedef struct _uart_ctx_t {
   const char *name;
   UART_HandleTypeDef *huart;
   IRQn_Type irq_num;
   DMA_HandleTypeDef *hdma_rx;
   DMA_HandleTypeDef *hdma_tx;
-  uint8_t buf[UART_BUF_LEN];
-  uint8_t buf_out[UART_BUF_LEN];
-  uint8_t data[1];
-  int buf_len;
-  int buf_out_len;
+  uart_dbl_buf_t buf;
 } uart_ctx_t;
 
 typedef struct _ctx_t {

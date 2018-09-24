@@ -141,22 +141,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    if (ctx.uart2.buf_out_len > 0) {
-        // SEGGER_RTT_printf(0, "uart2:CDC len=%d\n", ctx.uart2.buf_out_len);
-        while (CDC_Transmit_FS(ctx.uart2.buf_out, (uint16_t)ctx.uart2.buf_out_len, 0) == USBD_BUSY) {
-            /* Until data out. */
-        }
-        ctx.uart2.buf_out_len = 0;
-    } 
-    if (ctx.uart3.buf_out_len > 0) {
-        // SEGGER_RTT_printf(0, "uart3:CDC len=%d\n", ctx.uart3.buf_out_len);
-        while (CDC_Transmit_FS(ctx.uart3.buf_out, (uint16_t)ctx.uart3.buf_out_len, 2) == USBD_BUSY) {
-            /* Until data out. */
-        }
-        ctx.uart3.buf_out_len = 0;
-    }
+  while (1) {
+    __wfe();
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -335,38 +321,42 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+{
+  uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
+  const int usb_idx = (huart == &huart2) ? 0 : 2;
+  
+  // In Rx Half callback, the length of received data is half length of double buffer.
+  uart_ctx->buf.len[0] = DBL_BUF_LEN; 
+  while (CDC_Transmit_FS(uart_ctx->buf.data[0], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
+      /* Until data out. */
+  }
+  // Set index of double buffer to next.
+  uart_ctx->buf.idx = 1;
+}
+
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  if (huart == &huart2) {
-    ctx.uart2.buf[ctx.uart2.buf_len++] = ctx.uart2.data[0];
-    // SEGGER_RTT_printf(0, "[uart2]Rx(%d) %c\n", ctx.uart2.buf_len, ctx.uart2.data[0]);
-    if (ctx.uart2.buf_len == UART_BUF_LEN) {
-        memcpy(ctx.uart2.buf_out, ctx.uart2.buf, ctx.uart2.buf_len);
-        ctx.uart2.buf_out_len = ctx.uart2.buf_len;
-        ctx.uart2.buf_len = 0;
-    }
-    HAL_UART_Receive_IT(&huart2, ctx.uart2.data, 1);  
-  } else if (huart == &huart3) {
-    ctx.uart3.buf[ctx.uart3.buf_len++] = ctx.uart3.data[0];
-    // SEGGER_RTT_printf(0, "[uart3]Rx(%d) %c\n", ctx.uart3.buf_len, ctx.uart3.data[0]);
-    if (ctx.uart3.buf_len == UART_BUF_LEN) {
-        memcpy(ctx.uart2.buf_out, ctx.uart2.buf, ctx.uart3.buf_len);
-        ctx.uart3.buf_out_len = ctx.uart3.buf_len;
-        ctx.uart3.buf_len = 0;
-    }
-    HAL_UART_Receive_IT(&huart3, ctx.uart3.data, 1);
+  uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
+  const int usb_idx = (huart == &huart2) ? 0 : 2;
+
+  // In Rx callback, the length of received data is half length of double buffer.
+  uart_ctx->buf.len[1] = DBL_BUF_LEN; 
+  while (CDC_Transmit_FS(uart_ctx->buf.data[1], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
+      /* Until data out. */
   }
+  // Set index of double buffer to next.
+  uart_ctx->buf.idx = 0;
 }
+
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-  if (huart == &huart2) {
-    HAL_UART_Abort_IT(huart);
-    HAL_UART_Receive_IT(huart, ctx.uart2.buf, 1);  
-  } else if (huart == &huart3) {
-    HAL_UART_Abort_IT(huart);
-    HAL_UART_Receive_IT(huart, ctx.uart3.buf, 1);  
-  }
+  uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
+
+  HAL_UART_DMAStop(huart);
+  HAL_UART_Receive_DMA(huart, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
 }
 
 /* USER CODE END 4 */
@@ -383,6 +373,8 @@ void _Error_Handler(char *file, int line)
   /* User can add his own implementation to report the HAL error return state */
   while(1)
   {
+    SEGGER_RTT_printf(0, "_Error_Handler: %s #%d\n", file, line);
+    HAL_Delay(1000);
   }
   /* USER CODE END Error_Handler_Debug */
 }

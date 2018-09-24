@@ -38,6 +38,7 @@
 /* USER CODE BEGIN 0 */
 #include <string.h>
 #include "stm32f1xx_hal_usart.h"
+#include "usbd_cdc_if.h"
 #include "SEGGER_RTT.h"
 #include "main.h"
 /* USER CODE END 0 */
@@ -282,20 +283,31 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
   if(__HAL_USART_GET_FLAG(&huart2, USART_FLAG_IDLE)) {
-      if (ctx.uart2.buf_len > 0) {
-        if (ctx.uart2.buf_out_len == 0) {
-            memcpy(ctx.uart2.buf_out, ctx.uart2.buf, ctx.uart2.buf_len);
-            ctx.uart2.buf_out_len = ctx.uart2.buf_len;
-        } else {
-            memcpy(&ctx.uart2.buf_out[ctx.uart2.buf_out_len], ctx.uart2.buf, ctx.uart2.buf_len);
-            ctx.uart2.buf_out_len += ctx.uart2.buf_len;
-        }
-        ctx.uart2.buf_len = 0;
-      }
-      __HAL_USART_CLEAR_IDLEFLAG(&huart2);
+    uart_ctx_t * const uart_ctx = &ctx.uart2;
+    const int usb_idx = 0;
+    int buf_len; 
+    if (uart_ctx->buf.idx == 0) {
+      buf_len = DBL_BUF_TOTAL_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
+    } else {
+      buf_len = DBL_BUF_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
+    }
+
+    HAL_UART_DMAStop(&huart2);
+
+    while (CDC_Transmit_FS(uart_ctx->buf.data[uart_ctx->buf.idx], buf_len, usb_idx) == USBD_BUSY) {
+      /* Until data out. */
+    }
+
+    // Set index of double buffer to next.
+    uart_ctx->buf.idx = 0;
+    HAL_UART_Receive_DMA(&huart2, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
+
+    __HAL_USART_CLEAR_IDLEFLAG(&huart2);
+
   }
   /* USER CODE END USART2_IRQn 1 */
 }
+
 
 /**
 * @brief This function handles USART3 global interrupt.
@@ -309,17 +321,26 @@ void USART3_IRQHandler(void)
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
   if(__HAL_USART_GET_FLAG(&huart3, USART_FLAG_IDLE)) {
-     if (ctx.uart3.buf_len > 0) {
-        if (ctx.uart3.buf_out_len == 0) {
-            memcpy(ctx.uart3.buf_out, ctx.uart3.buf, ctx.uart3.buf_len);
-            ctx.uart3.buf_out_len = ctx.uart3.buf_len;
-        } else {
-            memcpy(&ctx.uart3.buf_out[ctx.uart3.buf_out_len], ctx.uart3.buf, ctx.uart3.buf_len);
-            ctx.uart3.buf_out_len += ctx.uart3.buf_len;
-        }
-        ctx.uart3.buf_len = 0;
+    uart_ctx_t * const uart_ctx = &ctx.uart3;
+    const int usb_idx = 2;
+    int buf_len; 
+    if (uart_ctx->buf.idx == 0) {
+      buf_len = DBL_BUF_TOTAL_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
+    } else {
+      buf_len = DBL_BUF_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
     }
-     __HAL_USART_CLEAR_IDLEFLAG(&huart3);
+
+    HAL_UART_DMAStop(&huart3);
+
+    while (CDC_Transmit_FS(uart_ctx->buf.data[uart_ctx->buf.idx], buf_len, usb_idx) == USBD_BUSY) {
+      /* Until data out. */
+    }
+
+    // Set index of double buffer to next.
+    uart_ctx->buf.idx = 0;
+    HAL_UART_Receive_DMA(&huart3, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
+    
+    __HAL_USART_CLEAR_IDLEFLAG(&huart3);
   }
   /* USER CODE END USART3_IRQn 1 */
 }

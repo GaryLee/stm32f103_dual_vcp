@@ -253,7 +253,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
     {
-      uart_ctx_t * const uart = (index < 2) ? &ctx.uart2 : &ctx.uart3;
+      uart_ctx_t * const uart_ctx = (index < 2) ? &ctx.uart2 : &ctx.uart3;
 
       USBD_CDC_LineCodingTypeDef *line_coding = (USBD_CDC_LineCodingTypeDef *)pbuf;
       if (line_coding->bitrate == 0 || line_coding->datatype == 0) {
@@ -267,29 +267,27 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
       *    bParityType -> line_coding->paritytype
       *    bDataBits   -> line_coding->datatype
       */      
-      uart->huart->Init.BaudRate = line_coding->bitrate;
-      uart->huart->Init.WordLength = (line_coding->datatype == 8) ? UART_WORDLENGTH_8B : UART_WORDLENGTH_9B;
-      uart->huart->Init.StopBits = (line_coding->format == 0) ? UART_STOPBITS_1 : UART_STOPBITS_2;
-      uart->huart->Init.Parity = (line_coding->paritytype == 0) ? UART_PARITY_NONE : (line_coding->paritytype == 1) ? UART_PARITY_ODD : UART_PARITY_EVEN;
-      uart->huart->Init.Mode = UART_MODE_TX_RX;
-      uart->huart->Init.HwFlowCtl = UART_HWCONTROL_NONE;
-      uart->huart->Init.OverSampling = UART_OVERSAMPLING_16;
+      uart_ctx->huart->Init.BaudRate = line_coding->bitrate;
+      uart_ctx->huart->Init.WordLength = (line_coding->datatype == 8) ? UART_WORDLENGTH_8B : UART_WORDLENGTH_9B;
+      uart_ctx->huart->Init.StopBits = (line_coding->format == 0) ? UART_STOPBITS_1 : UART_STOPBITS_2;
+      uart_ctx->huart->Init.Parity = (line_coding->paritytype == 0) ? UART_PARITY_NONE : (line_coding->paritytype == 1) ? UART_PARITY_ODD : UART_PARITY_EVEN;
+      uart_ctx->huart->Init.Mode = UART_MODE_TX_RX;
+      uart_ctx->huart->Init.HwFlowCtl = UART_HWCONTROL_NONE;
+      uart_ctx->huart->Init.OverSampling = UART_OVERSAMPLING_16;
         
-      __HAL_UART_DISABLE(uart->huart);
-      if (HAL_UART_Init(uart->huart) != HAL_OK) {
+      __HAL_UART_DISABLE(uart_ctx->huart);
+      if (HAL_UART_Init(uart_ctx->huart) != HAL_OK) {
         _Error_Handler(__FILE__, __LINE__);
       }
-      __HAL_UART_ENABLE_IT(uart->huart, UART_IT_RXNE);
-      __HAL_UART_ENABLE_IT(uart->huart, UART_IT_TXE);
-      __HAL_UART_ENABLE_IT(uart->huart, UART_IT_IDLE);
-      uart->buf_len = 0;
-      NVIC_EnableIRQ(uart->irq_num);
-      __HAL_UART_ENABLE(uart->huart);
-      NVIC_ClearPendingIRQ(uart->irq_num);
-      HAL_UART_Receive_IT(uart->huart, uart->data, 1);
-      
+      __HAL_UART_ENABLE_IT(uart_ctx->huart, UART_IT_IDLE);
+      __HAL_UART_ENABLE(uart_ctx->huart);
+      NVIC_ClearPendingIRQ(uart_ctx->irq_num);
+
+      HAL_UART_DMAStop(uart_ctx->huart);
+      HAL_UART_Receive_DMA(uart_ctx->huart, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
+
       SEGGER_RTT_printf(0, "LINE_CODING: UART=%s, bitrate=%d, format=%d, parity=%d, datatype=%d\n",
-        uart->name, line_coding->bitrate, line_coding->format, line_coding->paritytype, line_coding->datatype);
+        uart_ctx->name, line_coding->bitrate, line_coding->format, line_coding->paritytype, line_coding->datatype);
     }
     break;
 
