@@ -135,6 +135,14 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+  HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_2);
+  HAL_NVIC_SetPriority(USART2_IRQn       , 1, 1);
+  HAL_NVIC_SetPriority(USART3_IRQn       , 1, 1);
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 1, 0);
+
   __HAL_UART_DISABLE(&huart2);
   __HAL_UART_DISABLE(&huart3);
   /* USER CODE END 2 */
@@ -142,11 +150,37 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-    __wfe();
+    // __wfe();
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
+    if (ctx.uart2.buf_idx != ctx.uart2.buf.idx) {
+      while (CDC_Transmit_FS((uint8_t *)ctx.uart2.buf.data[ctx.uart2.buf_idx], ctx.uart2.buf.len[ctx.uart2.buf_idx], 0) == USBD_BUSY) {
+        /* Until data out. */
+      }
+      ctx.uart2.buf_idx = ctx.uart2.buf.idx;
+    } 
+    if (ctx.uart2.buf.rest_len > 0) {
+      int tx_len = ctx.uart2.buf.rest_len;
+      ctx.uart2.buf.rest_len = 0;
+      while (CDC_Transmit_FS((uint8_t *)ctx.uart2.buf.data_rest, tx_len, 0) == USBD_BUSY) {
+        /* Until data out. */
+      }
+    }
+    
+    if (ctx.uart3.buf_idx != ctx.uart3.buf.idx) {
+      while (CDC_Transmit_FS((uint8_t *)ctx.uart3.buf.data[ctx.uart3.buf_idx], ctx.uart3.buf.len[ctx.uart3.buf_idx], 2) == USBD_BUSY) {
+        /* Until data out. */
+      }
+      ctx.uart3.buf_idx = ctx.uart3.buf.idx;
+    }
+    if (ctx.uart3.buf.rest_len > 0) {
+      int tx_len = ctx.uart3.buf.rest_len;
+      ctx.uart3.buf.rest_len = 0;
+      while (CDC_Transmit_FS((uint8_t *)ctx.uart3.buf.data_rest, tx_len, 2) == USBD_BUSY) {
+        /* Until data out. */
+      }
+    }
   }
   /* USER CODE END 3 */
 
@@ -328,9 +362,9 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
   
   // In Rx Half callback, the length of received data is half length of double buffer.
   uart_ctx->buf.len[0] = DBL_BUF_LEN; 
-  while (CDC_Transmit_FS(uart_ctx->buf.data[0], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
-      /* Until data out. */
-  }
+  // while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[0], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
+  //     /* Until data out. */
+  // }
   // Set index of double buffer to next.
   uart_ctx->buf.idx = 1;
 }
@@ -343,9 +377,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
   // In Rx callback, the length of received data is half length of double buffer.
   uart_ctx->buf.len[1] = DBL_BUF_LEN; 
-  while (CDC_Transmit_FS(uart_ctx->buf.data[1], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
-      /* Until data out. */
-  }
+  // while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[1], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
+  //     /* Until data out. */
+  // }
   // Set index of double buffer to next.
   uart_ctx->buf.idx = 0;
 }
@@ -356,7 +390,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
   uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
 
   HAL_UART_DMAStop(huart);
-  HAL_UART_Receive_DMA(huart, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
+  HAL_UART_Receive_DMA(huart, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
 }
 
 /* USER CODE END 4 */

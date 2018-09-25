@@ -286,6 +286,9 @@ void USART2_IRQHandler(void)
     uart_ctx_t * const uart_ctx = &ctx.uart2;
     const int usb_idx = 0;
     int buf_len; 
+
+    __HAL_USART_CLEAR_IDLEFLAG(&huart2);
+
     if (uart_ctx->buf.idx == 0) {
       buf_len = DBL_BUF_TOTAL_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
     } else {
@@ -293,17 +296,17 @@ void USART2_IRQHandler(void)
     }
 
     HAL_UART_DMAStop(&huart2);
-
-    while (CDC_Transmit_FS(uart_ctx->buf.data[uart_ctx->buf.idx], buf_len, usb_idx) == USBD_BUSY) {
-      /* Until data out. */
+    if (buf_len > 0) {
+      // while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[uart_ctx->buf.idx], buf_len, usb_idx) == USBD_BUSY) {
+      //   /* Until data out. */
+      // }
+      memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
+      uart_ctx->buf.rest_len = buf_len;
     }
 
     // Set index of double buffer to next.
     uart_ctx->buf.idx = 0;
-    HAL_UART_Receive_DMA(&huart2, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
-
-    __HAL_USART_CLEAR_IDLEFLAG(&huart2);
-
+    HAL_UART_Receive_DMA(&huart2, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
   }
   /* USER CODE END USART2_IRQn 1 */
 }
@@ -324,6 +327,9 @@ void USART3_IRQHandler(void)
     uart_ctx_t * const uart_ctx = &ctx.uart3;
     const int usb_idx = 2;
     int buf_len; 
+
+    __HAL_USART_CLEAR_IDLEFLAG(&huart3);
+
     if (uart_ctx->buf.idx == 0) {
       buf_len = DBL_BUF_TOTAL_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
     } else {
@@ -331,16 +337,17 @@ void USART3_IRQHandler(void)
     }
 
     HAL_UART_DMAStop(&huart3);
-
-    while (CDC_Transmit_FS(uart_ctx->buf.data[uart_ctx->buf.idx], buf_len, usb_idx) == USBD_BUSY) {
-      /* Until data out. */
+    if (buf_len > 0) {
+      // while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[uart_ctx->buf.idx], buf_len, usb_idx) == USBD_BUSY) {
+      //   /* Until data out. */
+      // }
+      memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
+      uart_ctx->buf.rest_len = buf_len;
     }
-
     // Set index of double buffer to next.
     uart_ctx->buf.idx = 0;
-    HAL_UART_Receive_DMA(&huart3, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
-    
-    __HAL_USART_CLEAR_IDLEFLAG(&huart3);
+    HAL_UART_Receive_DMA(&huart3, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
+
   }
   /* USER CODE END USART3_IRQn 1 */
 }

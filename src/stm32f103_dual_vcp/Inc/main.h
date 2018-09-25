@@ -76,12 +76,14 @@
 #define MINOR_VERSION (0)
 #define PATCH_VERSION (0)
 
-#define DBL_BUF_LEN (64)
+#define DBL_BUF_LEN (60)
 #define DBL_BUF_TOTAL_LEN (2 * DBL_BUF_LEN)
 
 typedef struct _hart_dbl_buf_t {
-  uint8_t data[2][DBL_BUF_LEN];
+  uint32_t data[2][DBL_BUF_LEN / 4];
+  uint32_t data_rest[DBL_BUF_LEN / 4];
   int len[2];
+  int rest_len;
   int idx;
 } uart_dbl_buf_t;
 
@@ -92,6 +94,7 @@ typedef struct _uart_ctx_t {
   DMA_HandleTypeDef *hdma_rx;
   DMA_HandleTypeDef *hdma_tx;
   uart_dbl_buf_t buf;
+  int buf_idx;
 } uart_ctx_t;
 
 typedef struct _ctx_t {

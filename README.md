@@ -8,14 +8,14 @@ MCU: STM32F103C6Tx(72MHz, LQFP48, 32KB Flash, 10KB RAM)
 
 ## Software Development Environment
 
-- STM32CubeMX V4.25.0
+- STM32CubeMX V4.26.1
 - STM32Cube FW_F1 V1.6.1
 - gcc-arm-none-eabi-7-2017-q4-major
 
 ## Firmware Configureation
 
 - Memory configuration:
-    - Heap Size: 0x400
+    - Heap Size: 0x800
     - Stack Size: 0x800
 
 - Perpherials
@@ -23,7 +23,7 @@ MCU: STM32F103C6Tx(72MHz, LQFP48, 32KB Flash, 10KB RAM)
         - High Speed Clock (HSE): Crystal/Ceramic Resonator
         - Low Speed Clock (LSE) : Crystal/Ceramic Resonator
     - USB
-        - Device (FS) : Checked
+        - Device (FS)
 
     - USART1
         - Mode: Asynchronous
@@ -40,12 +40,8 @@ MCU: STM32F103C6Tx(72MHz, LQFP48, 32KB Flash, 10KB RAM)
     - USB_PM: PA12
     - USART2_TX: PA2
     - USART2_RX: PA3
-    - USART2_CTS: PA0(optional)
-    - USART2_RTS: PA1(optional)
     - USART3_TX: PB10
     - USART3_RX: PB11
-    - USART3_CTS: PB13(optional)
-    - USART3_RTS: PB14(optional)
 
 **NOTE**: Check stm32f103_dual_vcp.ioc for detial.
 

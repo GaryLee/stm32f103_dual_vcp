@@ -261,12 +261,12 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
       }
 
       /*
-      * The maping between USBD_CDC_LineCodingTypeDef and line coding structure.
-      *    dwDTERate   -> line_coding->bitrate
-      *    bCharFormat -> line_coding->format
-      *    bParityType -> line_coding->paritytype
-      *    bDataBits   -> line_coding->datatype
-      */      
+       * The maping between USBD_CDC_LineCodingTypeDef and line coding structure.
+       *    dwDTERate   -> line_coding->bitrate
+       *    bCharFormat -> line_coding->format
+       *    bParityType -> line_coding->paritytype
+       *    bDataBits   -> line_coding->datatype
+       */      
       uart_ctx->huart->Init.BaudRate = line_coding->bitrate;
       uart_ctx->huart->Init.WordLength = (line_coding->datatype == 8) ? UART_WORDLENGTH_8B : UART_WORDLENGTH_9B;
       uart_ctx->huart->Init.StopBits = (line_coding->format == 0) ? UART_STOPBITS_1 : UART_STOPBITS_2;
@@ -279,12 +279,13 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
       if (HAL_UART_Init(uart_ctx->huart) != HAL_OK) {
         _Error_Handler(__FILE__, __LINE__);
       }
+
       __HAL_UART_ENABLE_IT(uart_ctx->huart, UART_IT_IDLE);
       __HAL_UART_ENABLE(uart_ctx->huart);
       NVIC_ClearPendingIRQ(uart_ctx->irq_num);
 
       HAL_UART_DMAStop(uart_ctx->huart);
-      HAL_UART_Receive_DMA(uart_ctx->huart, uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
+      HAL_UART_Receive_DMA(uart_ctx->huart, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
 
       SEGGER_RTT_printf(0, "LINE_CODING: UART=%s, bitrate=%d, format=%d, parity=%d, datatype=%d\n",
         uart_ctx->name, line_coding->bitrate, line_coding->format, line_coding->paritytype, line_coding->datatype);
@@ -334,7 +335,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, uint16_t index)
   CDC_Transmit_FS(Buf, *Len, index);
 #else
   // SEGGER_RTT_printf(0, "[%s] Tx: %c\n", (index < 2) ? "uart2" : "uart3", Buf[0]);
-  HAL_UART_Transmit_IT((index < 2) ? ctx.uart2.huart : ctx.uart3.huart, Buf, *Len);
+  HAL_UART_Transmit_DMA((index < 2) ? ctx.uart2.huart : ctx.uart3.huart, Buf, *Len);
 #endif
   return (USBD_OK);
   /* USER CODE END 6 */
