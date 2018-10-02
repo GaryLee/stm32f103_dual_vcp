@@ -97,6 +97,8 @@ ctx_t ctx;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  int i;
+  uart_ctx_t * uart_ctx;
   memset(&ctx, 0, sizeof(ctx_t));
   ctx.uart2.name = "UART2";
   ctx.uart2.huart = &huart2;
@@ -154,31 +156,25 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-    if (ctx.uart2.buf_idx != ctx.uart2.buf.idx) {
-      while (CDC_Transmit_FS((uint8_t *)ctx.uart2.buf.data[ctx.uart2.buf_idx], ctx.uart2.buf.len[ctx.uart2.buf_idx], 0) == USBD_BUSY) {
-        /* Until data out. */
-      }
-      ctx.uart2.buf_idx = ctx.uart2.buf.idx;
-    } 
-    if (ctx.uart2.buf.rest_len > 0) {
-      int tx_len = ctx.uart2.buf.rest_len;
-      ctx.uart2.buf.rest_len = 0;
-      while (CDC_Transmit_FS((uint8_t *)ctx.uart2.buf.data_rest, tx_len, 0) == USBD_BUSY) {
-        /* Until data out. */
-      }
-    }
-    
-    if (ctx.uart3.buf_idx != ctx.uart3.buf.idx) {
-      while (CDC_Transmit_FS((uint8_t *)ctx.uart3.buf.data[ctx.uart3.buf_idx], ctx.uart3.buf.len[ctx.uart3.buf_idx], 2) == USBD_BUSY) {
-        /* Until data out. */
-      }
-      ctx.uart3.buf_idx = ctx.uart3.buf.idx;
-    }
-    if (ctx.uart3.buf.rest_len > 0) {
-      int tx_len = ctx.uart3.buf.rest_len;
-      ctx.uart3.buf.rest_len = 0;
-      while (CDC_Transmit_FS((uint8_t *)ctx.uart3.buf.data_rest, tx_len, 2) == USBD_BUSY) {
-        /* Until data out. */
+    for (i = 0; i < 2; i++) {
+      uart_ctx = (i == 0) ? &ctx.uart2 : &ctx.uart3;
+      if (uart_ctx->buf_idx != uart_ctx->buf.idx) {
+        int buf_idx = uart_ctx->buf_idx;
+        while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[buf_idx], uart_ctx->buf.len[buf_idx], 2 * i) == USBD_BUSY) {
+          /* Until data out. */
+        }
+        uart_ctx->buf_idx = buf_idx ? 0 : 1;
+        // SEGGER_RTT_printf(0, "mloop: buf=%d\n", buf_idx);
+      } 
+
+      if (uart_ctx->buf.rest_len > 0) {
+        int tx_len = uart_ctx->buf.rest_len;
+        uart_ctx->buf.rest_len = 0;
+        uart_ctx->buf_idx = 0;
+        while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data_rest, tx_len, 2 * i) == USBD_BUSY) {
+          /* Until data out. */
+        }
+        // SEGGER_RTT_printf(0, "rest: len=%d\n", tx_len);
       }
     }
   }
@@ -358,30 +354,43 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
   uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
-  const int usb_idx = (huart == &huart2) ? 0 : 2;
+  // const int usb_idx = (huart == &huart2) ? 0 : 2;
   
+  if (uart_ctx->buf.idx != 0) {
+    uart_ctx->buf.idx = 0;
+  }
+
+  if (uart_ctx->buf_idx == 1) {
+    // SEGGER_RTT_printf(0, "rxhalf: %s; [X]\n", uart_ctx->name);
+    return;
+  }
+
   // In Rx Half callback, the length of received data is half length of double buffer.
   uart_ctx->buf.len[0] = DBL_BUF_LEN; 
-  // while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[0], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
-  //     /* Until data out. */
-  // }
   // Set index of double buffer to next.
   uart_ctx->buf.idx = 1;
+  // SEGGER_RTT_printf(0, "rxhalf: %s; \n", uart_ctx->name);
 }
 
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
-  const int usb_idx = (huart == &huart2) ? 0 : 2;
+  // const int usb_idx = (huart == &huart2) ? 0 : 2;
+
+  if (uart_ctx->buf.idx != 1) {
+    uart_ctx->buf.idx = 1;
+  }
+  if (uart_ctx->buf_idx == 0) {
+    // SEGGER_RTT_printf(0, "rxcmpl: %s; [X]\n", uart_ctx->name);
+    return;
+  }
 
   // In Rx callback, the length of received data is half length of double buffer.
   uart_ctx->buf.len[1] = DBL_BUF_LEN; 
-  // while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[1], DBL_BUF_LEN, usb_idx) == USBD_BUSY) {
-  //     /* Until data out. */
-  // }
   // Set index of double buffer to next.
   uart_ctx->buf.idx = 0;
+  // SEGGER_RTT_printf(0, "rxcmpl: %s; \n", uart_ctx->name);
 }
 
 

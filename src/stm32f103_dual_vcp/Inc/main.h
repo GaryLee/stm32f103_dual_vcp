@@ -76,12 +76,12 @@
 #define MINOR_VERSION (0)
 #define PATCH_VERSION (0)
 
-#define DBL_BUF_LEN (60)
+#define DBL_BUF_LEN (1024)
 #define DBL_BUF_TOTAL_LEN (2 * DBL_BUF_LEN)
 
 typedef struct _hart_dbl_buf_t {
   uint32_t data[2][DBL_BUF_LEN / 4];
-  uint32_t data_rest[DBL_BUF_LEN / 4];
+  uint32_t data_rest[DBL_BUF_LEN / 4 * 2];
   int len[2];
   int rest_len;
   int idx;

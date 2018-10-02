@@ -354,18 +354,44 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, uint16_t index)
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, uint16_t index)
 {
-  uint8_t result = USBD_OK;
+  int i;
+  int rest_len;
+  uint8_t result;
   /* USER CODE BEGIN 7 */
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
   if (hcdc->TxState != 0){
     return USBD_BUSY;
   }
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
-  result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, index);
-  if (result == USBD_OK && (Len % USB_FS_MAX_PACKET_SIZE) == 0) {
-    USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, 0); // Send Zero-length packet to meet the rule of USB.
-    result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, index);
+
+  result = USBD_OK;
+  rest_len = Len;
+  for (i = 0; result == USBD_OK && i <= Len; rest_len = Len - i) {
+    
+    if (rest_len >= USB_FS_MAX_PACKET_SIZE) {
+      USBD_CDC_SetTxBuffer(&hUsbDeviceFS, &Buf[i], USB_FS_MAX_PACKET_SIZE);
+      i += USB_FS_MAX_PACKET_SIZE;
+      do {
+        result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, index);
+      } while (result == USBD_BUSY);
+
+    } else if (rest_len == 0) {
+      // It's necessary to send zero-length packet to compliance USB protocol.
+      USBD_CDC_SetTxBuffer(&hUsbDeviceFS, &Buf[0], 0);
+      do {
+        result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, index);
+      } while (result == USBD_BUSY);
+      break;
+
+    } else {
+      USBD_CDC_SetTxBuffer(&hUsbDeviceFS, &Buf[i], rest_len);
+      do {
+        result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, index);
+      } while (result == USBD_BUSY);
+      break;
+
+    }
   }
+
   /* USER CODE END 7 */
   return result;
 }
