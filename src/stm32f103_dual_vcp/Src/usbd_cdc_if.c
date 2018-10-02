@@ -253,7 +253,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length, uint16
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
     {
-      uart_ctx_t * const uart_ctx = (index < 2) ? &ctx.uart2 : &ctx.uart3;
+      uart_ctx_t * const uart_ctx = (index < 2) ? &ctx.uart1 : &ctx.uart2;
 
       USBD_CDC_LineCodingTypeDef *line_coding = (USBD_CDC_LineCodingTypeDef *)pbuf;
       if (line_coding->bitrate == 0 || line_coding->datatype == 0) {
@@ -334,8 +334,8 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, uint16_t index)
 #if defined(LOOPBACK_TEST)
   CDC_Transmit_FS(Buf, *Len, index);
 #else
-  // SEGGER_RTT_printf(0, "[%s] Tx: %c\n", (index < 2) ? "uart2" : "uart3", Buf[0]);
-  HAL_UART_Transmit_DMA((index < 2) ? ctx.uart2.huart : ctx.uart3.huart, Buf, *Len);
+  // SEGGER_RTT_printf(0, "[%s] Tx: %c\n", (index < 2) ? "uart1" : "uart2", Buf[0]);
+  HAL_UART_Transmit_DMA((index < 2) ? ctx.uart1.huart : ctx.uart2.huart, Buf, *Len);
 #endif
   return (USBD_OK);
   /* USER CODE END 6 */
@@ -354,16 +354,15 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, uint16_t index)
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, uint16_t index)
 {
+  uint8_t result = USBD_OK;
+  /* USER CODE BEGIN 7 */
   int i;
   int rest_len;
-  uint8_t result;
-  /* USER CODE BEGIN 7 */
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
   if (hcdc->TxState != 0){
     return USBD_BUSY;
   }
 
-  result = USBD_OK;
   rest_len = Len;
   for (i = 0; result == USBD_OK && i <= Len; rest_len = Len - i) {
     

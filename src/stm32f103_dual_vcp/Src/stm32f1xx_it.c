@@ -45,12 +45,12 @@
 
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_FS;
+extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
 extern DMA_HandleTypeDef hdma_usart2_tx;
-extern DMA_HandleTypeDef hdma_usart3_rx;
-extern DMA_HandleTypeDef hdma_usart3_tx;
+extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
 
 /******************************************************************************/
 /*            Cortex-M3 Processor Interruption and Exception Handlers         */ 
@@ -203,31 +203,31 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-* @brief This function handles DMA1 channel2 global interrupt.
+* @brief This function handles DMA1 channel4 global interrupt.
 */
-void DMA1_Channel2_IRQHandler(void)
+void DMA1_Channel4_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
 
-  /* USER CODE END DMA1_Channel2_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart3_tx);
-  /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
+  /* USER CODE END DMA1_Channel4_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_tx);
+  /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
 
-  /* USER CODE END DMA1_Channel2_IRQn 1 */
+  /* USER CODE END DMA1_Channel4_IRQn 1 */
 }
 
 /**
-* @brief This function handles DMA1 channel3 global interrupt.
+* @brief This function handles DMA1 channel5 global interrupt.
 */
-void DMA1_Channel3_IRQHandler(void)
+void DMA1_Channel5_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
 
-  /* USER CODE END DMA1_Channel3_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart3_rx);
-  /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
+  /* USER CODE END DMA1_Channel5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
 
-  /* USER CODE END DMA1_Channel3_IRQn 1 */
+  /* USER CODE END DMA1_Channel5_IRQn 1 */
 }
 
 /**
@@ -273,6 +273,43 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
 }
 
 /**
+* @brief This function handles USART1 global interrupt.
+*/
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+  if(__HAL_USART_GET_FLAG(&huart1, USART_FLAG_IDLE)) {
+    uart_ctx_t * const uart_ctx = &ctx.uart1;
+    int buf_len; 
+
+    __HAL_USART_CLEAR_IDLEFLAG(uart_ctx->huart);
+
+    if (uart_ctx->buf.idx == 0) {
+      buf_len = DBL_BUF_TOTAL_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
+    } else {
+      buf_len = DBL_BUF_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
+    }
+
+    // SEGGER_RTT_printf(0, "idle[1]: %d, len=%d\n", uart_ctx->buf.idx, buf_len);
+    HAL_UART_DMAStop(uart_ctx->huart);
+    if (buf_len > 0) {
+      memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
+      uart_ctx->buf.rest_len = buf_len;
+    }
+
+    // Set index of double buffer to next.
+    uart_ctx->buf.idx = 0;
+    HAL_UART_Receive_DMA(uart_ctx->huart, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
+
+  }
+  /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
 * @brief This function handles USART2 global interrupt.
 */
 void USART2_IRQHandler(void)
@@ -284,7 +321,6 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 1 */
   if(__HAL_USART_GET_FLAG(&huart2, USART_FLAG_IDLE)) {
     uart_ctx_t * const uart_ctx = &ctx.uart2;
-    // const int usb_idx = 0;
     int buf_len; 
 
     __HAL_USART_CLEAR_IDLEFLAG(&huart2);
@@ -298,9 +334,6 @@ void USART2_IRQHandler(void)
     // SEGGER_RTT_printf(0, "idle[2]: %d, len=%d\n", uart_ctx->buf.idx, buf_len);
     HAL_UART_DMAStop(uart_ctx->huart);
     if (buf_len > 0) {
-      // while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[uart_ctx->buf.idx], buf_len, usb_idx) == USBD_BUSY) {
-      //   /* Until data out. */
-      // }
       memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
       uart_ctx->buf.rest_len = buf_len;
     }
@@ -310,46 +343,6 @@ void USART2_IRQHandler(void)
     HAL_UART_Receive_DMA(uart_ctx->huart, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
   }
   /* USER CODE END USART2_IRQn 1 */
-}
-
-
-/**
-* @brief This function handles USART3 global interrupt.
-*/
-void USART3_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART3_IRQn 0 */
-  // SEGGER_RTT_printf(0, "Uart3 IRQ\n");
-
-  /* USER CODE END USART3_IRQn 0 */
-  HAL_UART_IRQHandler(&huart3);
-  /* USER CODE BEGIN USART3_IRQn 1 */
-  if(__HAL_USART_GET_FLAG(&huart3, USART_FLAG_IDLE)) {
-    uart_ctx_t * const uart_ctx = &ctx.uart3;
-    // const int usb_idx = 2;
-    int buf_len; 
-
-    __HAL_USART_CLEAR_IDLEFLAG(uart_ctx->huart);
-
-    if (uart_ctx->buf.idx == 0) {
-      buf_len = DBL_BUF_TOTAL_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
-    } else {
-      buf_len = DBL_BUF_LEN - __HAL_DMA_GET_COUNTER(uart_ctx->hdma_rx); 
-    }
-
-    // SEGGER_RTT_printf(0, "idle[3]: %d, len=%d\n", uart_ctx->buf.idx, buf_len);
-    HAL_UART_DMAStop(uart_ctx->huart);
-    if (buf_len > 0) {
-      memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
-      uart_ctx->buf.rest_len = buf_len;
-    }
-
-    // Set index of double buffer to next.
-    uart_ctx->buf.idx = 0;
-    HAL_UART_Receive_DMA(uart_ctx->huart, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);
-
-  }
-  /* USER CODE END USART3_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

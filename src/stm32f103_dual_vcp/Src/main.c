@@ -59,12 +59,12 @@
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
-DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -77,7 +77,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_RTC_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_USART3_UART_Init(void);
+static void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -100,16 +100,16 @@ int main(void)
   int i;
   uart_ctx_t * uart_ctx;
   memset(&ctx, 0, sizeof(ctx_t));
+  ctx.uart1.name = "UART1";
+  ctx.uart1.huart = &huart1;
+  ctx.uart1.hdma_rx = &hdma_usart1_rx;
+  ctx.uart1.hdma_tx = &hdma_usart1_tx;
+  ctx.uart1.irq_num = USART1_IRQn;
   ctx.uart2.name = "UART2";
   ctx.uart2.huart = &huart2;
   ctx.uart2.hdma_rx = &hdma_usart2_rx;
   ctx.uart2.hdma_tx = &hdma_usart2_tx;
   ctx.uart2.irq_num = USART2_IRQn;
-  ctx.uart3.name = "UART3";
-  ctx.uart3.huart = &huart3;
-  ctx.uart3.hdma_rx = &hdma_usart3_rx;
-  ctx.uart3.hdma_tx = &hdma_usart3_tx;
-  ctx.uart3.irq_num = USART3_IRQn;
 
   /* USER CODE END 1 */
 
@@ -134,19 +134,19 @@ int main(void)
   MX_DMA_Init();
   MX_RTC_Init();
   MX_USART2_UART_Init();
-  MX_USART3_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_2);
+  HAL_NVIC_SetPriority(USART1_IRQn       , 1, 1);
   HAL_NVIC_SetPriority(USART2_IRQn       , 1, 1);
-  HAL_NVIC_SetPriority(USART3_IRQn       , 1, 1);
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 1, 0);
-  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 1, 0);
   HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 1, 0);
   HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 1, 0);
 
+  __HAL_UART_DISABLE(&huart1);
   __HAL_UART_DISABLE(&huart2);
-  __HAL_UART_DISABLE(&huart3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -157,7 +157,7 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
     for (i = 0; i < 2; i++) {
-      uart_ctx = (i == 0) ? &ctx.uart2 : &ctx.uart3;
+      uart_ctx = (i == 0) ? &ctx.uart1 : &ctx.uart2;
       if (uart_ctx->buf_idx != uart_ctx->buf.idx) {
         int buf_idx = uart_ctx->buf_idx;
         while (CDC_Transmit_FS((uint8_t *)uart_ctx->buf.data[buf_idx], uart_ctx->buf.len[buf_idx], 2 * i) == USBD_BUSY) {
@@ -269,6 +269,25 @@ static void MX_RTC_Init(void)
 
 }
 
+/* USART1 init function */
+static void MX_USART1_UART_Init(void)
+{
+
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
 /* USART2 init function */
 static void MX_USART2_UART_Init(void)
 {
@@ -288,25 +307,6 @@ static void MX_USART2_UART_Init(void)
 
 }
 
-/* USART3 init function */
-static void MX_USART3_UART_Init(void)
-{
-
-  huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
-  huart3.Init.WordLength = UART_WORDLENGTH_8B;
-  huart3.Init.StopBits = UART_STOPBITS_1;
-  huart3.Init.Parity = UART_PARITY_NONE;
-  huart3.Init.Mode = UART_MODE_TX_RX;
-  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart3) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-}
-
 /** 
   * Enable DMA controller clock
   */
@@ -316,12 +316,12 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-  /* DMA1_Channel3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+  /* DMA1_Channel4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
   /* DMA1_Channel6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
@@ -345,7 +345,6 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
 }
 
@@ -353,7 +352,7 @@ static void MX_GPIO_Init(void)
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
-  uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
+  uart_ctx_t * const uart_ctx = (huart == &huart1) ? &ctx.uart1 : &ctx.uart2;
   // const int usb_idx = (huart == &huart2) ? 0 : 2;
   
   if (uart_ctx->buf.idx != 0) {
@@ -375,7 +374,7 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
+  uart_ctx_t * const uart_ctx = (huart == &huart1) ? &ctx.uart1 : &ctx.uart2;
   // const int usb_idx = (huart == &huart2) ? 0 : 2;
 
   if (uart_ctx->buf.idx != 1) {
@@ -396,7 +395,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-  uart_ctx_t * const uart_ctx = (huart == &huart2) ? &ctx.uart2 : &ctx.uart3;
+  uart_ctx_t * const uart_ctx = (huart == &huart1) ? &ctx.uart1 : &ctx.uart2;
 
   HAL_UART_DMAStop(huart);
   HAL_UART_Receive_DMA(huart, (uint8_t *)uart_ctx->buf.data[0], DBL_BUF_TOTAL_LEN);

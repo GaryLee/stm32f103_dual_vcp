@@ -98,8 +98,8 @@ typedef struct _uart_ctx_t {
 } uart_ctx_t;
 
 typedef struct _ctx_t {
+  uart_ctx_t uart1;
   uart_ctx_t uart2;
-  uart_ctx_t uart3;
 } ctx_t;
 
 extern ctx_t ctx;
