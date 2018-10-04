@@ -100,6 +100,7 @@ typedef struct _uart_ctx_t {
 typedef struct _ctx_t {
   uart_ctx_t uart1;
   uart_ctx_t uart2;
+  DMA_HandleTypeDef *memcpy_dma;
 } ctx_t;
 
 extern ctx_t ctx;

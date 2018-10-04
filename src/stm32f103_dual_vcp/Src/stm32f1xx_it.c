@@ -297,8 +297,16 @@ void USART1_IRQHandler(void)
     // SEGGER_RTT_printf(0, "idle[1]: %d, len=%d\n", uart_ctx->buf.idx, buf_len);
     HAL_UART_DMAStop(uart_ctx->huart);
     if (buf_len > 0) {
-      memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
-      uart_ctx->buf.rest_len = buf_len;
+      if (buf_len == 1) {
+        uart_ctx->buf.data_rest[0] = uart_ctx->buf.data[uart_ctx->buf.idx][0];
+        uart_ctx->buf.rest_len = 1;
+      } else {
+        // memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
+        HAL_DMA_Start(ctx.memcpy_dma, (uint32_t)uart_ctx->buf.data[uart_ctx->buf.idx], (uint32_t)uart_ctx->buf.data_rest, buf_len);
+        if (HAL_DMA_PollForTransfer(ctx.memcpy_dma, HAL_DMA_FULL_TRANSFER, 2) == HAL_OK) {
+          uart_ctx->buf.rest_len = buf_len;
+        }
+      }
     }
 
     // Set index of double buffer to next.
@@ -334,8 +342,16 @@ void USART2_IRQHandler(void)
     // SEGGER_RTT_printf(0, "idle[2]: %d, len=%d\n", uart_ctx->buf.idx, buf_len);
     HAL_UART_DMAStop(uart_ctx->huart);
     if (buf_len > 0) {
-      memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
-      uart_ctx->buf.rest_len = buf_len;
+      if (buf_len == 1) {
+        uart_ctx->buf.data_rest[0] = uart_ctx->buf.data[uart_ctx->buf.idx][0];
+        uart_ctx->buf.rest_len = 1;
+      } else {
+        // memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
+        HAL_DMA_Start(ctx.memcpy_dma, (uint32_t)uart_ctx->buf.data[uart_ctx->buf.idx], (uint32_t)uart_ctx->buf.data_rest, buf_len);
+        if (HAL_DMA_PollForTransfer(ctx.memcpy_dma, HAL_DMA_FULL_TRANSFER, 2) == HAL_OK) {
+          uart_ctx->buf.rest_len = buf_len;
+        }
+      }
     }
 
     // Set index of double buffer to next.

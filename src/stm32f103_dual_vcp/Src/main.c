@@ -66,6 +66,8 @@ DMA_HandleTypeDef hdma_usart1_tx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
+DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -110,7 +112,7 @@ int main(void)
   ctx.uart2.hdma_rx = &hdma_usart2_rx;
   ctx.uart2.hdma_tx = &hdma_usart2_tx;
   ctx.uart2.irq_num = USART2_IRQn;
-
+  ctx.memcpy_dma = &hdma_memtomem_dma1_channel1;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -138,12 +140,15 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_2);
-  HAL_NVIC_SetPriority(USART1_IRQn       , 1, 1);
-  HAL_NVIC_SetPriority(USART2_IRQn       , 1, 1);
-  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 1, 0);
-  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 1, 0);
-  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 1, 0);
-  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(USB_HP_CAN1_TX_IRQn  , 0, 2);
+  HAL_NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn , 0, 3);
+  HAL_NVIC_SetPriority(USART1_IRQn          , 0, 1);
+  HAL_NVIC_SetPriority(USART2_IRQn          , 0, 1);
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn   , 0, 2);
+  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn   , 1, 1); // UART1 Tx
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn   , 1, 0); // UART1 Rx
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn   , 1, 1); // UART2 Tx
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn   , 1, 0); // UART2 Rx
 
   __HAL_UART_DISABLE(&huart1);
   __HAL_UART_DISABLE(&huart2);
@@ -309,11 +314,27 @@ static void MX_USART2_UART_Init(void)
 
 /** 
   * Enable DMA controller clock
+  * Configure DMA for memory to memory transfers
+  *   hdma_memtomem_dma1_channel1
   */
 static void MX_DMA_Init(void) 
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* Configure DMA request hdma_memtomem_dma1_channel1 on DMA1_Channel1 */
+  hdma_memtomem_dma1_channel1.Instance = DMA1_Channel1;
+  hdma_memtomem_dma1_channel1.Init.Direction = DMA_MEMORY_TO_MEMORY;
+  hdma_memtomem_dma1_channel1.Init.PeriphInc = DMA_PINC_ENABLE;
+  hdma_memtomem_dma1_channel1.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_memtomem_dma1_channel1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+  hdma_memtomem_dma1_channel1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_memtomem_dma1_channel1.Init.Mode = DMA_NORMAL;
+  hdma_memtomem_dma1_channel1.Init.Priority = DMA_PRIORITY_MEDIUM;
+  if (HAL_DMA_Init(&hdma_memtomem_dma1_channel1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
 
   /* DMA interrupt init */
   /* DMA1_Channel4_IRQn interrupt configuration */

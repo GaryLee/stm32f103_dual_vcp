@@ -1,9 +1,19 @@
 #MicroXplorer Configuration settings - do not modify
+Dma.MEMTOMEM.4.Direction=DMA_MEMORY_TO_MEMORY
+Dma.MEMTOMEM.4.Instance=DMA1_Channel1
+Dma.MEMTOMEM.4.MemDataAlignment=DMA_MDATAALIGN_BYTE
+Dma.MEMTOMEM.4.MemInc=DMA_MINC_ENABLE
+Dma.MEMTOMEM.4.Mode=DMA_NORMAL
+Dma.MEMTOMEM.4.PeriphDataAlignment=DMA_PDATAALIGN_BYTE
+Dma.MEMTOMEM.4.PeriphInc=DMA_PINC_ENABLE
+Dma.MEMTOMEM.4.Priority=DMA_PRIORITY_HIGH
+Dma.MEMTOMEM.4.RequestParameters=Instance,Direction,PeriphInc,MemInc,PeriphDataAlignment,MemDataAlignment,Mode,Priority
 Dma.Request0=USART2_RX
 Dma.Request1=USART2_TX
 Dma.Request2=USART1_RX
 Dma.Request3=USART1_TX
-Dma.RequestsNb=4
+Dma.Request4=MEMTOMEM
+Dma.RequestsNb=5
 Dma.USART1_RX.2.Direction=DMA_PERIPH_TO_MEMORY
 Dma.USART1_RX.2.Instance=DMA1_Channel5
 Dma.USART1_RX.2.MemDataAlignment=DMA_MDATAALIGN_BYTE
