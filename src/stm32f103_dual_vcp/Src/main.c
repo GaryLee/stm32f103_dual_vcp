@@ -144,7 +144,7 @@ int main(void)
   HAL_NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn , 0, 3);
   HAL_NVIC_SetPriority(USART1_IRQn          , 0, 1);
   HAL_NVIC_SetPriority(USART2_IRQn          , 0, 1);
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn   , 0, 2);
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn   , 0, 2); // DMA for memory copy.
   HAL_NVIC_SetPriority(DMA1_Channel4_IRQn   , 1, 1); // UART1 Tx
   HAL_NVIC_SetPriority(DMA1_Channel5_IRQn   , 1, 0); // UART1 Rx
   HAL_NVIC_SetPriority(DMA1_Channel6_IRQn   , 1, 1); // UART2 Tx
