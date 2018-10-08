@@ -348,7 +348,7 @@ void USART2_IRQHandler(void)
       } else {
         // memcpy(uart_ctx->buf.data_rest, uart_ctx->buf.data[uart_ctx->buf.idx], buf_len);
         HAL_DMA_Start(ctx.memcpy_dma, (uint32_t)uart_ctx->buf.data[uart_ctx->buf.idx], (uint32_t)uart_ctx->buf.data_rest, buf_len);
-        if (HAL_DMA_PollForTransfer(ctx.memcpy_dma, HAL_DMA_FULL_TRANSFER, 2) == HAL_OK) {
+        if (HAL_DMA_PollForTransfer(ctx.memcpy_dma, HAL_DMA_FULL_TRANSFER, 10) == HAL_OK) {
           uart_ctx->buf.rest_len = buf_len;
         }
       }
